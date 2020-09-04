@@ -2,10 +2,44 @@ plugins {
     kotlin("multiplatform") version "1.4.0"
     id("com.android.library")
     id("kotlin-android-extensions")
+    id("maven-publish")
 }
 
 group = "com.example.lib-test"
 version = "1.0.0"
+
+
+
+
+fun Project.envOrProperty(name: String): String? {
+    return System.getenv(name) ?: project.propertyStringOrNull(name)
+}
+
+fun Project.propertyStringOrNull(propertyName: String): String? {
+    return if (hasProperty(propertyName)) {
+        property(propertyName) as? String
+
+    } else {
+        null
+    }
+}
+
+val artifactoryUrl = project.envOrProperty("artifactory_url")
+val artifactoryUser = project.envOrProperty("artifactory_username")
+val artifactoryPassword = project.envOrProperty("artifactory_password")
+
+publishing {
+    repositories {
+        maven {
+            url = uri("${artifactoryUrl}/libs-release-local")
+            credentials {
+                username = "${artifactoryUser}"
+                password = "${artifactoryPassword}"
+            }
+        }
+    }
+}
+
 
 
 repositories {
@@ -15,7 +49,10 @@ repositories {
     mavenCentral()
 }
 kotlin {
-    android()
+    android{
+        publishLibraryVariants("release", "debug")
+    }
+
     iosX64("ios") {
         binaries {
             framework {
